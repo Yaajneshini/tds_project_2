@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tds-virtual-ta
+    env: python
+    region: oregon
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: cd api && gunicorn app:app --workers=1
+    workingDir: api
+    plan: free
