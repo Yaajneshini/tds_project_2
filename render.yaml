@@ -2,6 +2,7 @@ services:
   - type: web
     name: tds-virtual-ta
     env: python
+    pythonVersion: 3.11
     region: oregon
     buildCommand: pip install -r api/requirements.txt
     startCommand: gunicorn app:app --workers=1
