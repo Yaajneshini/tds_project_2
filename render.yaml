@@ -4,6 +4,6 @@ services:
     env: python
     region: oregon
     buildCommand: pip install -r api/requirements.txt
-    startCommand: cd api && gunicorn app:app --workers=1
+    startCommand: gunicorn app:app --workers=1
     workingDir: api
     plan: free
