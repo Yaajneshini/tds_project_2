@@ -6,7 +6,7 @@ import numpy as np
 import base64
 import mimetypes
 import sys
-import gzip # Import gzip for loading the downloaded .gz file
+# Removed: import gzip # No longer needed as we're not gzipping/ungzipping here
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,65 +26,34 @@ HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 # --- File Paths ---
 BASE_DIR = os.path.dirname(__file__)
 INDEX_FILE = os.path.join(BASE_DIR, "faiss_index", "index.faiss")
-METADATA_FILE = os.path.join(BASE_DIR, "faiss_index", "metadatas.json.gz") # This file will be downloaded
+# Changed: Now points to the plain .json file
+METADATA_FILE = os.path.join(BASE_DIR, "faiss_index", "metadatas.json")
 
-# --- Google Drive Config ---
-# Ensure GDRIVE_METADATA_ID is set in Render Environment Variables
-GDRIVE_FILE_ID = os.getenv("GDRIVE_METADATA_ID")
-if not GDRIVE_FILE_ID:
-    print("WARNING: GDRIVE_METADATA_ID environment variable not set. Metadata will not be downloaded.", file=sys.stderr)
-
+# Removed: Google Drive Config section entirely
 
 # --- Global Lazy Variables ---
 _lazy_index = None
 _lazy_metadata = None
 
-
-def download_metadata_from_gdrive():
-    """
-    Downloads the metadata.json.gz file from Google Drive.
-    """
-    if not GDRIVE_FILE_ID:
-        print("Error: GDRIVE_METADATA_ID is not set. Cannot download metadata.", file=sys.stderr)
-        return False
-
-    print(f"🔹 Downloading metadata from Google Drive (ID: {GDRIVE_FILE_ID})...")
-    url = f"https://docs.google.com/uc?export=download&id={GDRIVE_FILE_ID}"
-    
-    try:
-        response = requests.get(url, stream=True, timeout=300) # Increased timeout
-        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
-
-        os.makedirs(os.path.dirname(METADATA_FILE), exist_ok=True)
-        with open(METADATA_FILE, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        print("✅ Download complete.")
-        return True
-    except requests.exceptions.RequestException as e:
-        print(f"Error downloading metadata from Google Drive: {e}", file=sys.stderr)
-        return False
-    except Exception as e:
-        print(f"An unexpected error occurred during Google Drive download: {e}", file=sys.stderr)
-        return False
-
+# Removed: download_metadata_from_gdrive() function entirely
 
 def load_index_and_metadata():
     global _lazy_index, _lazy_metadata
     if _lazy_index and _lazy_metadata:
         return _lazy_index, _lazy_metadata
 
+    # Ensure both index and metadata files exist locally in the faiss_index folder
     if not os.path.exists(INDEX_FILE):
         raise FileNotFoundError(f"{INDEX_FILE} missing. Ensure it is committed to Git.")
     
-    # Download metadata if it doesn't exist locally (for Render deployment)
+    # Check for the plain .json metadata file
     if not os.path.exists(METADATA_FILE):
-        if not download_metadata_from_gdrive():
-            raise FileNotFoundError(f"{METADATA_FILE} could not be downloaded or is missing.")
+        raise FileNotFoundError(f"{METADATA_FILE} missing. Ensure it is committed to Git.")
 
     print("🔹 Loading FAISS index and metadata")
     _lazy_index = faiss.read_index(INDEX_FILE)
-    with gzip.open(METADATA_FILE, "rt", encoding="utf-8") as f:
+    # Changed: Open the plain .json file directly
+    with open(METADATA_FILE, "rt", encoding="utf-8") as f:
         _lazy_metadata = json.load(f)
     return _lazy_index, _lazy_metadata
 
@@ -117,7 +86,7 @@ def cosine_sim(a, b):
 
 def get_post_number_from_url(url):
     """
-    Extracts the Discourse post number from a URL, if applicable.
+    Extracs the Discourse post number from a URL, if applicable.
     """
     try:
         if "discourse.onlinedegree.iitm.ac.in/t/" in url:
